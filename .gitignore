@@ -1,60 +1,37 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
 env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environment
 venv/
 ENV/
 .env
+build/
+dist/
+*.egg-info/
 
-# Recording sessions
+# Recording sessions and media
 sessions/
-**/sessions/
+*.wav
+*.mp3
+*.jpg
 
-# Models and vector databases
+# Models and databases
 *.bin
 *.pkl
 *.model
+vector_db/
 
-# IDE
+# IDE and OS
 .idea/
 .vscode/
 *.swp
-*.swo
-
-# Logs
-*.log
-logs/
-
-# OS files
 .DS_Store
 Thumbs.db
 
-# Audio and screenshots
-*.wav
-*.mp3
-*.png
-*.jpg
-*.jpeg
-
-# Temporary files
+# Logs and temp
+*.log
+logs/
 tmp/
 temp/

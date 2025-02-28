@@ -2,6 +2,10 @@
 
 A system that enables web agents to learn from human demonstrations of browser workflows and execute them with higher reliability through test-time retrieval of learned trajectories.
 
+<p align="center"><img src="assets/onboarding-diagram.png" alt="Phase 1: Onboarding" width="850"></p>
+<p align="center"><img src="assets/test-time-diagram.png" alt="Phase 2: Test-Time" width="850"></p>
+
+
 ## Architecture Overview
 
 ### 1. Recording & Transcription
