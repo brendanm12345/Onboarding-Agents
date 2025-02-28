@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+venv/
+ENV/
+.env
+
+# Recording sessions
+sessions/
+**/sessions/
+
+# Models and vector databases
+*.bin
+*.pkl
+*.model
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Audio and screenshots
+*.wav
+*.mp3
+*.png
+*.jpg
+*.jpeg
+
+# Temporary files
+tmp/
+temp/
