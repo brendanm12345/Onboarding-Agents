@@ -1,0 +1,14 @@
+{
+  "session_id": "e9b53c06-e498-4e5c-8def-86fd2c5b40a0",
+  "timestamp": "2025-03-11T19:43:33.132654+00:00",
+  "duration_seconds": 43.930469,
+  "chunks": [
+    {
+      "start_time": 0.0,
+      "end_time": 42.560001373291016,
+      "speech": " All right so the first thing we're gonna do is add an item to the to-do list. So  what I'm gonna do is click here, type in first to-do item, click enter and that  will actually add the item to the list. Now if we want to check what our active  items are we can go click on active which is right here and now we see that  we have that one active item that we added. So we're gonna check it off. Now if  we want to see what we completed we can click on this completed button and as  we can see the item is completed. Lastly if you want to clear our completed we  can click on this button right here. Done. All right thank you.",
+      "actions": [],
+      "url": ""
+    }
+  ]
+}
