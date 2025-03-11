@@ -3,6 +3,7 @@ from litellm import completion
 
 class LiteLLMClient:
     def __init__(self, model="gpt-4o"):
+        """Initialize LLM Client."""
         self.model = model
 
     def generate(self, messages: List[Dict[str, str]], stream=False) -> str:

@@ -6,6 +6,7 @@ from src.utils.data import get_base_url
 class SkillRetrievalService:
     def __init__(self):
         self.embedding_model = 'hf.co/CompendiumLabs/bge-base-en-v1.5-gguf'
+        # dict of in-memory vector dbs
         self.vector_dbs = {}
     
     def _cosine_similarity(self, a, b):
@@ -21,7 +22,7 @@ class SkillRetrievalService:
         """
         try:
             embedding = ollama.embed(model=self.embedding_model, input=skill)['embeddings'][0]
-            # right now this means we're actually embeddign the DOM actions— we might want to just embed description and url
+            # right now this means we're actually embedding the DOM actions— we might want to just embed description and url
             self.vector_dbs[get_base_url(skill["url"])].append((skill, embedding))
         except Exception as e:
             print(f"Error embedding skill: {e}")

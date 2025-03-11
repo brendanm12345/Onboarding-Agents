@@ -1,0 +1,69 @@
+{
+  "workflow_id": "e9d5d97e-4ee3-4db2-abb4-133ff9adc46a",
+  "timestamp": "20250301_184642",
+  "actions": [
+    {
+      "type": "GOTO",
+      "instruction": "https://docs.google.com",
+      "url": "https://docs.google.com",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    },
+    {
+      "type": "ACT",
+      "instruction": "Click on the '229 Project' Google Sheet",
+      "url": "https://docs.google.com",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    },
+    {
+      "type": "ACT",
+      "instruction": "Click on 'Extensions' in the top toolbar",
+      "url": "https://docs.google.com/spreadsheets",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    },
+    {
+      "type": "ACT",
+      "instruction": "Click on 'Manage Add-ons'",
+      "url": "https://docs.google.com/spreadsheets",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    },
+    {
+      "type": "ACT",
+      "instruction": "Click on 'PDF Filler' app",
+      "url": "https://docs.google.com/spreadsheets",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    },
+    {
+      "type": "ACT",
+      "instruction": "Click on 'Uninstall App'",
+      "url": "https://docs.google.com/spreadsheets",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    },
+    {
+      "type": "ACT",
+      "instruction": "Click on 'Uninstall' in the pop-up",
+      "url": "https://docs.google.com/spreadsheets",
+      "error_handling": {
+        "retry_count": 3,
+        "timeout_ms": 5000
+      }
+    }
+  ]
+}

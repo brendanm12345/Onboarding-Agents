@@ -1,0 +1,49 @@
+{
+  "workflow_id": "e9d5d97e-4ee3-4db2-abb4-133ff9adc46a",
+  "timestamp": "20250301_184642",
+  "original_transcript": "Alright, so I'm opening Google Docs and now we see the 229 Project Google Sheet pulled up. What I'm going to do is click on Extensions in the top toolbar and then click on Manage Add-ons over here. Alright, so now we can see PDF Filler as an app, so we're going to click on that and we're going to uninstall the app. So that's what we're trying to do. So we're going to click Uninstall App and then this pop-up, Uninstall.",
+  "actions": [
+    {
+      "semantic_description": "Open Google Docs",
+      "action_type": "GOTO",
+      "instruction": "https://docs.google.com",
+      "url": "https://docs.google.com"
+    },
+    {
+      "semantic_description": "Open the 229 Project Google Sheet",
+      "action_type": "ACT",
+      "instruction": "Click on the '229 Project' Google Sheet",
+      "url": "https://docs.google.com"
+    },
+    {
+      "semantic_description": "Click on Extensions in the top toolbar",
+      "action_type": "ACT",
+      "instruction": "Click on 'Extensions' in the top toolbar",
+      "url": "https://docs.google.com/spreadsheets"
+    },
+    {
+      "semantic_description": "Click on Manage Add-ons",
+      "action_type": "ACT",
+      "instruction": "Click on 'Manage Add-ons'",
+      "url": "https://docs.google.com/spreadsheets"
+    },
+    {
+      "semantic_description": "Select PDF Filler app",
+      "action_type": "ACT",
+      "instruction": "Click on 'PDF Filler' app",
+      "url": "https://docs.google.com/spreadsheets"
+    },
+    {
+      "semantic_description": "Uninstall the PDF Filler app",
+      "action_type": "ACT",
+      "instruction": "Click on 'Uninstall App'",
+      "url": "https://docs.google.com/spreadsheets"
+    },
+    {
+      "semantic_description": "Confirm uninstallation",
+      "action_type": "ACT",
+      "instruction": "Click on 'Uninstall' in the pop-up",
+      "url": "https://docs.google.com/spreadsheets"
+    }
+  ]
+}
