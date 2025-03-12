@@ -6,14 +6,13 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://demo.playwright.dev/todomvc/#/")
-    page.get_by_text("This is just a demo of TodoMVC for testing, not the real TodoMVC app. todos").click()
-    page.get_by_role("textbox", name="What needs to be done?").fill("first todo item")
+    page.goto("https://demo.playwright.dev/todomvc/#/completed")
+    page.get_by_role("textbox", name="What needs to be done?").click()
+    page.get_by_role("textbox", name="What needs to be done?").fill("first item")
     page.get_by_role("textbox", name="What needs to be done?").press("Enter")
+    page.get_by_role("link", name="All").click()
     page.get_by_role("checkbox", name="Toggle Todo").check()
     page.get_by_role("link", name="Completed").click()
-    page.get_by_role("button", name="Clear completed").click()
-    page.get_by_text("This is just a demo of TodoMVC for testing, not the real TodoMVC app. todos").click()
 
     # ---------------------
     context.close()

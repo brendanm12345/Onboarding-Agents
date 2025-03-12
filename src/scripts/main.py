@@ -2,10 +2,10 @@ import time
 from src.services.workflow_recorder import WorkflowRecorder
 
 def main():
-    # Initialize recorder
+    # init recorder
     recorder = WorkflowRecorder()
     
-    # Start recording with initial URL
+    # start recording
     url = input("Enter the starting URL: ")
     session_id = recorder.start_recording(url)
     print(f"Recording started with session ID: {session_id}")
@@ -15,7 +15,7 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\nStopping recording...")
+        print("\nStopping recording. Please wait for processing to finish...")
         result = recorder.stop_recording()
         print("\nRecording saved:")
         print(f"Session ID: {result['session_id']}")
