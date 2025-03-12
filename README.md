@@ -9,18 +9,16 @@ A system that enables web agents to learn from human demonstrations of browser w
 ## Architecture Overview
 
 ### 1. Recording & Transcription
-- Records user speech using OpenAI Whisper (segmented by pauses)
-- Captures DOM actions (clicks, typing, navigation) using Playwright
-- Takes screenshots at key moments for context
-- Merges into a unified, chronological transcript
+- Simultaneously:
+  - Records user speech using OpenAI Whisper (segmented by pauses)
+  - Generates playwright code to replicate the users exact actions using [Playwright Codegen](https://playwright.dev/python/docs/codegen)
+- LLM refactors and annotates the playwright code, grouping together atomic action seqences (i.e "add an item to the todo list") into functions
+- Refactored playwright code is a library of composable, learned sub workflows that can be retrieve at test-time
+  - Here is an example of the output of this step: [src/workflows/todo-app-trancript-2/refactored_workflow.py](src/workflows/todo-app-trancript-2/refactored_workflow.py)
 
-### 2. Skill Extraction
-- Chunks transcripts with contextual headers/footers
-- Uses LLM to identify reusable skill sequences that are:
-  - Likely to be commonly used
-  - Static & atomic (minimal parameterization needed)
-- Extracts tuples of `(description, url, action_sequence)` (TBD)
-- Stores in vector DBs, one per website/tool
+### 2. Workflow Ingestion
+- Ingest new workflows, from the above step, into an existing knowledge base / libary of learned subworkflows
+- Use store basic file system index or store in vector DBs
 
 ### 3. Skill Retrieval
 - Exposes API endpoint for agent to query
