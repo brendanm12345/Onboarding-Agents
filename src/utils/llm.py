@@ -9,8 +9,8 @@ class LiteLLMClient:
         self.model = model
 
     def generate(self, messages: List[Dict[str, str]], response_format: Optional[Type[BaseModel]]=None) -> Union[BaseModel, str]:
+        """LLM completion function that supports all models and structured output."""
         try:
-            # Only check support for structured outputs if response_format is provided
             if response_format and not supports_response_schema(model=self.model):
                 print(f"Model {self.model} does not support structured outputs")
                 return None
@@ -43,24 +43,3 @@ class LiteLLMClient:
     
     def __call__(self, messages: List[Dict[str, str]], response_format: Optional[Type[BaseModel]]=None) -> Union[BaseModel, str]:
         return self.generate(messages, response_format)
-
-
-if __name__ == "__main__":
-    class PostProcessingOutput(BaseModel):
-        refactored_python_file: str
-        explanation: str
-
-    system_prompt = """You are an expert at analyzing web automation workflows..."""  # Your existing prompt
-
-    user_prompt = f"""Please refactor this web automation workflow..."""  # Your existing prompt
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-    
-    client = LiteLLMClient()
-    response: PostProcessingOutput = client.generate(messages, response_format=PostProcessingOutput)
-    print(response)
-    # The response is already a PostProcessingOutput object, so we can access its fields directly
-    print(f"\nrefactored pythonFILE: {response.refactored_python_file}")
