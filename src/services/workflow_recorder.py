@@ -76,12 +76,15 @@ class WorkflowRecorder:
 
         # Start Playwright codegen in a separate process
         playwright_workflow_path = workflow_dir / "playwright_workflow.py"
+        auth_path = workflow_dir / "auth.json"
         self.playwright_process = subprocess.Popen(
             [
                 "playwright",
                 "codegen",
                 "--target", "python",
                 "-o", str(playwright_workflow_path),
+                "--save-storage",
+                str(auth_path),
                 url
             ],
             stdout=subprocess.PIPE,
@@ -248,6 +251,8 @@ Please provide a complete refactored Python file that implements this workflow a
         with open(transcript_path, "w") as f:
             json.dump(whisper_response.model_dump(), f, indent=2)
 
+        auth_path = workflow_dir / "auth.json"
+
         return {
             "session_id": self.session_id,
             "workflow_dir": str(workflow_dir),
@@ -255,6 +260,7 @@ Please provide a complete refactored Python file that implements this workflow a
                 "audio": str(audio_path),
                 "playwright": str(playwright_workflow_path),
                 "refactored": str(refactored_playwright_workflow_path),
-                "transcript": str(transcript_path)
+                "transcript": str(transcript_path),
+                "auth": str(auth_path)
             }
         }
