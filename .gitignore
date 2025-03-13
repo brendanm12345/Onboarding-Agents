@@ -35,3 +35,9 @@ Thumbs.db
 logs/
 tmp/
 temp/
+
+# Node
+node_modules/
+
+# Other
+results/

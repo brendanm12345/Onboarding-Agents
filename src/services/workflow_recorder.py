@@ -74,6 +74,9 @@ class WorkflowRecorder:
         workflow_dir = self.workflows_dir / self.session_id
         workflow_dir.mkdir()
 
+        # TODO: automatically try to find existing auth.json for demos with this URL, if we find, pass --load-storage
+        load_auth_path = "workflows/3b4800ef-0739-4239-bbe6-0b4cb63b7aaa/auth.json" # this is the auth file for WRDS
+
         # Start Playwright codegen in a separate process
         playwright_workflow_path = workflow_dir / "playwright_workflow.py"
         auth_path = workflow_dir / "auth.json"
@@ -83,6 +86,8 @@ class WorkflowRecorder:
                 "codegen",
                 "--target", "python",
                 "-o", str(playwright_workflow_path),
+                "--load-storage",
+                str(load_auth_path),
                 "--save-storage",
                 str(auth_path),
                 url
