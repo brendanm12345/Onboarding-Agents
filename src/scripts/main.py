@@ -2,10 +2,9 @@ import time
 from src.services.workflow_recorder import WorkflowRecorder
 
 def main():
-    # init recorder
+    """Script to run recording and processing of human workflow demonstration."""
     recorder = WorkflowRecorder()
     
-    # start recording
     url = input("Enter the starting URL: ")
     session_id = recorder.start_recording(url)
     print(f"Recording started with session ID: {session_id}")

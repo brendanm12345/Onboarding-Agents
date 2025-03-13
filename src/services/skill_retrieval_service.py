@@ -4,6 +4,7 @@ import numpy as np
 from src.utils.data import get_base_url
 
 class SkillRetrievalService:
+    """TODO: this is not currently being used but we may want to draw from this starter RAG implementation later on"""
     def __init__(self):
         self.embedding_model = 'hf.co/CompendiumLabs/bge-base-en-v1.5-gguf'
         # dict of in-memory vector dbs
