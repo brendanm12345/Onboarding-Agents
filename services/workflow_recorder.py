@@ -61,7 +61,7 @@ class WorkflowRecorder:
         self.PAUSE_THRESHOLD = 2.0  # seconds of silence to detect pause
 
         self.client = OpenAI()
-        self.litellmclient = LiteLLMClient()
+        self.litellmclient = LiteLLMClient(model="o3-mini")
 
         # Recording state
         self.frames = []
@@ -83,7 +83,7 @@ class WorkflowRecorder:
     def start_recording(self, url: str) -> str:
         """Start recording a workflow session"""
         try:
-            self.session_id = str(uuid.uuid4())
+            self.session_id = datetime.now(timezone.utc)
             self.start_time = datetime.now(timezone.utc)
 
             workflow_dir = self.workflows_dir / self.session_id
@@ -158,6 +158,15 @@ class WorkflowRecorder:
             with open(path, 'r') as f:
                 return f.read()
         return ""
+    
+    def _log_llm_step(self, step_name: str, **entries: Any) -> None:
+        """Helper to log LLM reasoning steps to the workflow log file"""
+        log_path = self.workflows_dir / self.session_id / "llm_reasoning.log"
+        with open(log_path, "a") as log:
+            log.write(f"\n=== {step_name} - {datetime.now(timezone.utc)} ===\n")
+            for name, content in entries.items():
+                if content:  # Only log non-empty content
+                    log.write(f"\n{name}:\n{content}\n")
 
     def _build_post_processing_prompt(self, whisper_response, playwright_workflow_path: str) -> str:
         """"""
@@ -169,12 +178,15 @@ class WorkflowRecorder:
         } for segment in response_dict.get("segments", [])]
 
         speech_segments = ""
+        transcription_log = ""
         for segment in processed_whisper_response:
             speech_segments += f"""
     Speech: {segment['speech']}
     Start Time: {segment['start']}
     End Time: {segment['end']}
     """
+            transcription_log += f"Speech: {segment['speech']}\nTime: {segment['start']} - {segment['end']}\n"
+    
         playwright_workflow = self._get_file_content(playwright_workflow_path)
 
         system_prompt = """You are an expert at analyzing web automation workflows and converting them into reusable, well-structured code libraries. Your task is to:
@@ -234,6 +246,13 @@ Please provide a complete refactored Python file that implements this workflow a
             {"role": "user", "content": user_prompt}
         ]
 
+        self._log_llm_step("Post-Processing Step",
+            Transcription=transcription_log,
+            Playwright_Workflow=playwright_workflow,
+            System_Prompt=system_prompt,
+            User_Prompt=user_prompt
+        )
+
         return messages
 
     def _run_refactored_workflow(self, path: Path) -> Tuple[str, int]:
@@ -255,11 +274,15 @@ Please provide a complete refactored Python file that implements this workflow a
 
         steps = 0
         current_response = response
+
+        self._log_llm_step("Starting Iterative Refinement")
+
         while steps < max_steps:
             output, return_code = self._run_refactored_workflow(verified_path)
             if return_code == 0 and "Error" not in output:
-                print(f"Workflow succeeded after {steps + 1} refinement steps")
-                return current_response
+                self._log_llm_step(f"Refinement Success", 
+                    Step=f"Workflow succeeded after {steps + 1} refinement steps"
+                )
 
             messages.append({
                 "role": "assistant",
@@ -293,25 +316,46 @@ Please provide a complete refactored Python file that implements this workflow a
 
             messages.append({"role": "user", "content": refinement_prompt})
 
-            current_response: VerificationOutput = self.litellmclient.generate(
+            self._log_llm_step(f"Refinement Step {steps + 1}",
+                Workflow_Output=output,
+                Return_Code=str(return_code)
+            )
+
+            current_response = self.litellmclient.generate(
                 messages,
                 response_format=VerificationOutput
             )
 
             if current_response is None:
-                print(f"Refinement failed at step {steps + 1}")
+                self._log_llm_step(f"Refinement Failed", 
+                    Step=f"Failed at step {steps + 1}"
+                )
                 return None
             
             with open(verified_path, 'w') as f:
                 f.write(current_response.verified_python_file)
-
+                
+            self._log_llm_step(f"Refinement Update",
+                Reasoning=current_response.reasoning
+            )
+            
             steps += 1
         
-        print(f"Reached max refinement steps ({max_steps})")
+        self._log_llm_step("Refinement Complete", 
+            Message=f"Reached max refinement steps ({max_steps})"
+        )
+        
         return current_response
 
     def _build_verification_prompt(self, messages: List[Dict[str, str]], response: PostProcessingOutput, workflow_output: str, workflow_code: int) -> str:
         """Added verification prompt to current context window to add URL validation and resolve any errors"""
+
+        self._log_llm_step("Verification Step",
+            Refactored_Code=response.refactored_python_file,
+            Explanation=response.explanation,
+            Workflow_Output=workflow_output,
+            Return_Code=str(workflow_code)
+        )
 
         messages.append({
             "role": "assistant",

@@ -66,6 +66,12 @@ class DemoAgent(Agent):
         system_msgs = []
         user_msgs = []
 
+        current_url = None
+        if "open_page_urls" in obs and "active_page_index" in obs:
+            active_page_index = obs["active_page_index"]
+            if 0 <= active_page_index < len(obs["open_pages_urls"]):
+                current_url = obs["open_pages_urls"][active_page_index]
+
         if self.chat_mode:
             system_msgs.append(
                 {
@@ -232,7 +238,7 @@ I see date input fields in the query build form and it looks the set_date_range 
                 "type": "text",
                 "text": f"{action_space_raw}".format(
                     action_space_description=self.action_set.describe(with_long_description=False, with_examples=True),
-                    workflow_action_space_description=get_workflow_action_space_description()
+                    workflow_action_space_description=get_workflow_action_space_description(url=current_url)
                 )
             }
         )
@@ -318,8 +324,6 @@ You will now think step by step and produce your next best action. Reflect on yo
         action = response.choices[0].message.content
 
         self.action_history.append(f"{action}")
-
-        print(f"\nHere is the chosen action ('{action}') and its source code:\n{custom_action_mapping(action_str=action)}")
 
         return action, {}
 

@@ -112,21 +112,31 @@ def load_workflow_functions(workflows_base_dir: str = None) -> Dict[str, Callabl
                 spec = importlib.util.spec_from_file_location(module_name, module_path)
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
+
+                with open(module_path, 'r') as f:
+                    module_source = f.read()
                 
                 # Get all functions from the module
                 for name, obj in inspect.getmembers(module, inspect.isfunction):
                     # Skip main_workflow and private functions
                     if name != "main_workflow" and not name.startswith("_"):
-                        print(f"Found function: {name}")
-                        # Create a wrapper that removes the 'page' parameter from signature
-                        sig = inspect.signature(obj)
-                        params = list(sig.parameters.values())
-                        
-                        # Remove 'page' parameter if it exists
-                        if params and params[0].name == "page":
-                            params = params[1:]
-                            
-                        workflow_functions[name] = create_wrapper(obj, params)
+                        try:
+                            source = inspect.getsource(obj)
+                            # Check if the function definition appears in the module source
+                            if f"def {name}(" in module_source:
+                                print(f"Found function: {name}")
+                                # Create a wrapper that removes the 'page' parameter from signature
+                                sig = inspect.signature(obj)
+                                params = list(sig.parameters.values())
+                                
+                                # Remove 'page' parameter if it exists
+                                if params and params[0].name == "page":
+                                    params = params[1:]
+                                    
+                                workflow_functions[name] = create_wrapper(obj, params)
+                        except (OSError, TypeError):
+                            # This can happen for built-ins or imports
+                            continue
                 
             except Exception as e:
                 print(f"Error loading workflow from {module_path}: {e}")
@@ -177,7 +187,7 @@ def get_workflow_action_space_description(url: str = None) -> str:
         }
     
     # Build the description
-    description = "# Available Workflow Actions\n\n"
+    description = "# Available Workflow Actions\n\n" if not url else f"# Available Workflow Actions for Current URL: {url}\n\n"
     description += "Each action can be called using the format: ```WORKFLOW.action_name(args)```\n\n"
     
     for func_name, func_obj in sorted(workflow_functions.items()):
@@ -186,7 +196,7 @@ def get_workflow_action_space_description(url: str = None) -> str:
             
             # Skip if URL is provided and this function has a URL constraint that doesn't match
             if url and info['url_constraint']:
-                if not (url.startswith(info['url_constraint']) or info['url_constraint'].startswith(url)):
+                if not (url == info['url_constraint']):
                     continue
             
             description += f"## {func_name}{info['signature']}\n\n"
@@ -201,9 +211,6 @@ def get_workflow_action_space_description(url: str = None) -> str:
             
         except Exception as e:
             description += f"Error extracting info for {func_name}: {e}\n\n"
-    
-    if url:
-        description = f"# Action Space Description for URL: {url}\n\n" + description
     
     return description
 
@@ -277,17 +284,19 @@ def custom_action_mapping(action_str: str, workflows_dir: str = None) -> str:
     else:
         raise ValueError(f"Unknown action type. Must start with 'STANDARD.' or 'WORKFLOW.'")
 
+"""TESTS"""
+
 def test_workflow_description():
     """Test the workflow action space description function"""
     print("\nTesting workflow action space description...")
     
     # Test without URL constraint
-    print("\n1. Testing without URL:")
-    description = get_workflow_action_space_description()
-    print(description)
+    # print("\n1. Testing without URL:")
+    # description = get_workflow_action_space_description()
+    # print(description)
     
     # Test with specific URL
-    test_url = "https://wrds-www.wharton.upenn.edu/pages/get-data/compustat-capital-iq-standard-poors/compustat/north-america-daily/fundamentals-annual/"
+    test_url = "https://wrds-www.wharton.upenn.edu/pages/get-data/compustat-capital-iq-standard-poors/compustat/north-america-daily/"
     print("\n2. Testing with specific URL:")
     description = get_workflow_action_space_description(url=test_url)
     print(description)
