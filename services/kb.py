@@ -9,7 +9,7 @@ class KnowledgeBase:
         if kb_file:
             self.load_from_file(kb_file)
     
-    def load_from_file(self, path: str):
+def load_from_file(self, path: str):
         """Load knowledge base from file"""
         if os.path.exists(path):
             with open(path, 'r') as f:

@@ -1,4 +1,4 @@
-from src.agents.browser_gym.action_library import (
+from agents.browser_gym.action_library import (
     navigate_to_data_source,
     set_date_range,
     enter_ticker,

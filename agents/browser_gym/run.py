@@ -1,11 +1,7 @@
 import argparse
-
-# locally defined agent
-from agent import DemoAgentArgs
-
-# browsergym experiments utils
 from browsergym.experiments import EnvArgs, ExpArgs, get_exp_result
 
+from agent import DemoAgentArgs
 from custom_action_mapping import custom_action_mapping
 
 
@@ -78,9 +74,6 @@ https://github.com/ServiceNow/AgentLab"""
     )
 
     args = parse_args()
-
-    # Import the custom action mapping here
-    from custom_action_mapping import custom_action_mapping
 
     # Monkey patch the ExpArgs run method to use our custom action mapping
     original_run = ExpArgs.run

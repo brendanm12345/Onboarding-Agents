@@ -7,7 +7,7 @@ from browsergym.core.action.python import PythonActionSet
 from browsergym.experiments import AbstractAgentArgs, Agent
 from browsergym.utils.obs import flatten_axtree_to_str, flatten_dom_to_str, prune_html
 
-from src.agents.browser_gym.utils import deduplicate_axtree, image_to_jpg_base64_url
+from agents.browser_gym.utils import deduplicate_axtree, image_to_jpg_base64_url
 
 logger = logging.getLogger(__name__)
 

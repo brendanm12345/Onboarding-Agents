@@ -6,11 +6,9 @@ from playwright.sync_api import Playwright, sync_playwright, expect, Page
 def navigate_to_login_page(page: Page) -> None:
     """
     Navigates to the login page of the WRDS website.
-    Expects the URL to be the main page of WRDS.
     """
-    expected_url = "https://wrds-www.wharton.upenn.edu/"
-    assert page.url == expected_url, f"Expected URL to be {expected_url}, but got {page.url}"
-    page.goto(expected_url)
+    expect(page).to_have_url("https://wrds-www.wharton.upenn.edu/")
+    page.goto("https://wrds-www.wharton.upenn.edu/login")
 
 
 def perform_login(page: Page, username: str, password: str) -> None:

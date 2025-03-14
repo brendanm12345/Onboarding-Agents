@@ -124,7 +124,7 @@ def main_workflow() -> None:
     """
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=False)
-        context = browser.new_context(storage_state="src/scripts/workflows/f821e2ca-a8a7-47fd-9379-c9bdf4c9ca8d/auth.json")
+        context = browser.new_context(storage_state="src/scripts/workflows/3b4800ef-0739-4239-bbe6-0b4cb63b7aaa/auth.json")
 
         try:
             page = open_page(context, "https://wrds-www.wharton.upenn.edu/")
