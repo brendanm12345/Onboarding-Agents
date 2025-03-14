@@ -6,8 +6,10 @@ from browsergym.core.action.highlevel import HighLevelActionSet
 from browsergym.core.action.python import PythonActionSet
 from browsergym.experiments import AbstractAgentArgs, Agent
 from browsergym.utils.obs import flatten_axtree_to_str, flatten_dom_to_str, prune_html
+from custom_action_mapping import custom_action_mapping
 
 from agents.browser_gym.utils import deduplicate_axtree, image_to_jpg_base64_url
+from agents.browser_gym.custom_action_mapping import get_workflow_action_space_description
 
 logger = logging.getLogger(__name__)
 
@@ -203,94 +205,12 @@ Tab {page_index}{" (active tab)" if page_index == obs["active_page_index"] else 
             )
 
         # append action space description
-        action_space_raw = r'''
-# Standard Action Space
+        action_space_raw = r"""# Standard Action Space
 {action_space_description}
 
 # Workflow Action Space - A library atomic subworkflows that your employer demonstrated to you that might be relevant to this task.
 
-def navigate_to_data_source(page: Page) -> None:
-    """
-    Navigate to the data retrieval tab and select Compustat Annual Fundamentals for North America.
-    """
-    assert "wrds" in page.url, "Not on the WRDS page!"
-    page.get_by_role("tab", name=" Get Data ").click()
-    page.get_by_role("link", name="Compustat - Capital IQ", exact=True).click()
-    page.get_by_role("link", name=" North America 19 child items").click()
-    page.get_by_role("link", name="Fundamentals Annual").click()
-
-def set_date_range(page: Page, start_date: str, end_date: str) -> None:
-    """
-    Set the date range for data retrieval.
-    :param start_date: The start date in YYYY-MM format.
-    :param end_date: The end date in YYYY-MM format.
-    """
-    page.get_by_role("textbox", name="Start Date").fill(start_date)
-    page.get_by_role("textbox", name="End Date").fill(end_date)
-
-def enter_ticker(page: Page, ticker: str) -> None:
-    """
-    Enter the company's ticker symbol.
-    :param ticker: The ticker symbol for the company.
-    """
-    combobox = page.get_by_role("combobox", name="Search Name or Ticker")
-    combobox.fill(ticker)
-    combobox.press("Enter")
-
-def add_variables(page: Page, variables: list) -> None:
-    """
-    Add the desired variables to the analysis. Only supports "tic", "revt", "dltt", "dt", "dlc" right now
-    :param variables: A list of variables to select.
-    """
-    search_box = page.get_by_role("textbox", name="Search All")
-    
-    for variable in variables:
-        # Clear any existing text, fill with the variable name
-        search_box.click()
-        search_box.fill(variable)
-        
-        # Find and click the variable in the dropdown
-        # The selector may need adjustment based on the actual page structure
-        # Wait a moment for the dropdown to populate
-        time.sleep(0.5)
-        
-        # Using a more specific selector based on your working approach
-        if variable == "tic":
-            page.locator("#select_all_container_div-08689682-4bdf-3947-97d8-433f285f28a9, [id^='select_all_container_div']").get_by_text("Ticker Symbol (tic)").click()
-        elif variable == "revt":
-            page.locator("#select_all_container_div-08689682-4bdf-3947-97d8-433f285f28a9, [id^='select_all_container_div']").get_by_text("Revenue - Total (revt)").click()
-        elif variable == "dltt":
-            page.locator("#select_all_container_div-08689682-4bdf-3947-97d8-433f285f28a9, [id^='select_all_container_div']").get_by_text("Long-Term Debt - Total (dltt)").click()
-        elif variable == "dt":
-            page.locator("#select_all_container_div-08689682-4bdf-3947-97d8-433f285f28a9, [id^='select_all_container_div']").get_by_text("Total Debt Including Current").click()
-        elif variable == "dlc":
-            page.locator("#select_all_container_div-08689682-4bdf-3947-97d8-433f285f28a9, [id^='select_all_container_div']").get_by_text("Debt in Current Liabilities").click()
-
-def set_output_options(page: Page, email: str) -> None:
-    """
-    Set the output options for the data retrieval, including the format and email.
-    :param email: The email address to send the report to.
-    """
-    page.get_by_text("Excel spreadsheet (*.xlsx)").click()
-    email_box = page.get_by_role("textbox", name="E-Mail Address (Optional)")
-    email_box.fill(email)
-
-def perform_query_and_download(page: Page) -> None:
-    """
-    Submit the form, wait for the query to complete, and download the result.
-    """
-    with page.expect_popup() as page_info:
-        page.get_by_role("button", name="Submit Form").click()
-    query_page = page_info.value
-    
-    # Validate correct navigation
-    query_page.goto("https://wrds-www.wharton.upenn.edu/query-manager/query/9587217/")
-
-    with query_page.expect_download() as download_info:
-        query_page.get_by_role("link", name="Download .xlsx Output").click()
-    download = download_info.value
-    # Download path could be used here if needed:
-    # download.save_as(<desired_path>)
+{workflow_action_space_description}
 
 Please use the following format to select an action from either the standard action space or the workflow action space:
 - For standard actions: STANDARD.<action_name>(<args>)  e.g., STANDARD.click(bid='123')
@@ -306,12 +226,13 @@ I found the information requested by the user, I will send it to the chat.
 
 I see date input fields in the query build form and it looks the set_date_range function in our workflow libary was written for this so I'll just use that directly.
 ```WORKFLOW.set_date_range(start_date='2020-01', end_date='2024-12')```
-        '''
+"""
         user_msgs.append(
             {
                 "type": "text",
                 "text": f"{action_space_raw}".format(
-                    action_space_description=self.action_set.describe(with_long_description=False, with_examples=True)
+                    action_space_description=self.action_set.describe(with_long_description=False, with_examples=True),
+                    workflow_action_space_description=get_workflow_action_space_description()
                 )
             }
         )
@@ -396,7 +317,9 @@ You will now think step by step and produce your next best action. Reflect on yo
         )
         action = response.choices[0].message.content
 
-        self.action_history.append(action)
+        self.action_history.append(f"{action}")
+
+        print(f"\nHere is the chosen action ('{action}') and its source code:\n{custom_action_mapping(action_str=action)}")
 
         return action, {}
 

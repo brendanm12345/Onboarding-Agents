@@ -120,7 +120,7 @@ https://github.com/ServiceNow/AgentLab"""
         task_seed=None,
         max_steps=100,
         headless=False,  # keep the browser open
-        storage_state="src/scripts/workflows/f821e2ca-a8a7-47fd-9379-c9bdf4c9ca8d/auth.json"
+        storage_state="auth/auth.json"
     )
 
     # for openended task, set environment and agent to interactive chat mode on a start url
@@ -135,7 +135,7 @@ https://github.com/ServiceNow/AgentLab"""
         agent_args=agent_args,
     )
 
-    exp_args.prepare("src/agents/browser_gym/results")
+    exp_args.prepare("agents/browser_gym/results")
     exp_args.run()
 
     # loading and printing results 
