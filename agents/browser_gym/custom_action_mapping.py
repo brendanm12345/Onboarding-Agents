@@ -94,16 +94,13 @@ def load_workflow_functions(workflows_base_dir: str = None) -> Dict[str, Callabl
     
     # Get the workflows directory path
     if workflows_base_dir is None:
-        # Use relative path from current script location
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        workflows_base_dir = os.path.join(current_dir, '..', '..', 'workflows')
+        workflows_base_dir = 'workflows'
     
     print(f"Searching for workflows in: {workflows_base_dir}")
     
     # Walk through all subdirectories
     for root, _, files in os.walk(workflows_base_dir):
         if 'verified_workflow.py' in files:
-            print(f"Found workflow file in: {root}")
             module_path = os.path.join(root, 'verified_workflow.py')
             
             try:
@@ -124,7 +121,6 @@ def load_workflow_functions(workflows_base_dir: str = None) -> Dict[str, Callabl
                             source = inspect.getsource(obj)
                             # Check if the function definition appears in the module source
                             if f"def {name}(" in module_source:
-                                print(f"Found function: {name}")
                                 # Create a wrapper that removes the 'page' parameter from signature
                                 sig = inspect.signature(obj)
                                 params = list(sig.parameters.values())
@@ -147,72 +143,70 @@ def load_workflow_functions(workflows_base_dir: str = None) -> Dict[str, Callabl
 def get_workflow_action_space_description(url: str = None) -> str:
     """
     Generates a description of the workflow action space, including function signatures,
-    docstrings, and implementation details. Optionally filters actions based on URL.
-    
-    Args:
-        url (str, optional): Current URL of the web agent. If provided, only shows
-            actions that are valid for the current URL.
-            
-    Returns:
-        str: Formatted description of the available workflow actions
+    docstrings, and implementation details.
     """
-    workflow_functions = load_workflow_functions()
+    try:
+        workflow_functions = load_workflow_functions()
+        
+        if not workflow_functions:
+            return "# Available Workflow Actions\n\nEach action can be called using the format: ```WORKFLOW.action_name(args)```\n\nN/A"
+        
+        def extract_function_info(func_obj):
+            try:
+                original_func = func_obj.original_func
+                
+                sig = func_obj.__signature__
+                
+                params = [p for p in sig.parameters.values()]
+                sig_str = f"({', '.join(str(p) for p in params)})"
+                docstring = inspect.getdoc(original_func) or "No description available"
+                source = inspect.getsource(original_func)
+                url_match = re.search(r'expect\(page\).to_have_url\("([^"]+)"\)', source)
+                url_constraint = url_match.group(1) if url_match else None
+                implementation = func_obj()
+                
+                return {
+                    'signature': sig_str,
+                    'docstring': docstring,
+                    'implementation': implementation,
+                    'url_constraint': url_constraint
+                }
+            except Exception as e:
+                print(f"Error in extract_function_info: {str(e)}")
+                raise
     
-    def extract_function_info(func_obj):
-        """Helper to extract signature, docstring and implementation"""
-        # Get original function
-        original_func = func_obj.original_func
+        # Build the description
+        description = "# Available Workflow Actions\n\n" if not url else f"# Available Workflow Actions for Current URL: {url}\n\n"
+        description += "Each action can be called using the format: ```WORKFLOW.action_name(args)```\n\n"
         
-        # Get signature without 'page' parameter
-        sig = func_obj.__signature__
-        params = [p for p in sig.parameters.values()]
-        sig_str = f"({', '.join(str(p) for p in params)})"
+        for func_name, func_obj in sorted(workflow_functions.items()):
+            try:
+                info = extract_function_info(func_obj)
+                
+                # Skip if URL is provided and this function has a URL constraint that doesn't match
+                if url and info['url_constraint']:
+                    if not (url == info['url_constraint']):
+                        print(f"Skipping this workflow function {info["signature"]} due to URL constraint")
+                        continue
+                
+                description += f"## {func_name}{info['signature']}\n\n"
+                description += f"**Description:**\n{info['docstring']}\n\n"
+                
+                if info['url_constraint']:
+                    description += f"**URL Constraint:** This action requires being on a page matching:\n{info['url_constraint']}\n\n"
+                
+                description += "**Implementation:**\n```python\n"
+                description += info['implementation']
+                description += "\n```\n\n"
+                
+            except Exception as e:
+                description += f"Error extracting info for {func_name}: {e}\n\n"
         
-        # Extract docstring
-        docstring = inspect.getdoc(original_func) or "No description available"
-        
-        # Extract URL constraint if it exists
-        source = inspect.getsource(original_func)
-        url_match = re.search(r'expect\(page\).to_have_url\("([^"]+)"\)', source)
-        url_constraint = url_match.group(1) if url_match else None
-        
-        # Get implementation by calling the wrapper with no args
-        implementation = func_obj()
-        
-        return {
-            'signature': sig_str,
-            'docstring': docstring,
-            'implementation': implementation,
-            'url_constraint': url_constraint
-        }
-    
-    # Build the description
-    description = "# Available Workflow Actions\n\n" if not url else f"# Available Workflow Actions for Current URL: {url}\n\n"
-    description += "Each action can be called using the format: ```WORKFLOW.action_name(args)```\n\n"
-    
-    for func_name, func_obj in sorted(workflow_functions.items()):
-        try:
-            info = extract_function_info(func_obj)
-            
-            # Skip if URL is provided and this function has a URL constraint that doesn't match
-            if url and info['url_constraint']:
-                if not (url == info['url_constraint']):
-                    continue
-            
-            description += f"## {func_name}{info['signature']}\n\n"
-            description += f"**Description:**\n{info['docstring']}\n\n"
-            
-            if info['url_constraint']:
-                description += f"**URL Constraint:** This action requires being on a page matching:\n{info['url_constraint']}\n\n"
-            
-            description += "**Implementation:**\n```python\n"
-            description += info['implementation']
-            description += "\n```\n\n"
-            
-        except Exception as e:
-            description += f"Error extracting info for {func_name}: {e}\n\n"
-    
-    return description
+        return description
+
+    except Exception as e:
+        print(f"Error in get_workflow_action_space_description: {str(e)}")
+        return f"Error generating workflow description: {str(e)}"
 
 def custom_action_mapping(action_str: str, workflows_dir: str = None) -> str:
     """
@@ -232,7 +226,6 @@ def custom_action_mapping(action_str: str, workflows_dir: str = None) -> str:
         raise ValueError("No action found within triple backticks")
     
     action_str = match.group(1).strip()
-    print(f"Extracted action: {action_str}")
     
     if action_str.startswith("STANDARD."):
         # Handle standard BrowserGym actions
@@ -291,15 +284,15 @@ def test_workflow_description():
     print("\nTesting workflow action space description...")
     
     # Test without URL constraint
-    # print("\n1. Testing without URL:")
-    # description = get_workflow_action_space_description()
-    # print(description)
+    print("\n1. Testing without URL:")
+    description = get_workflow_action_space_description()
+    print(description)
     
     # Test with specific URL
-    test_url = "https://wrds-www.wharton.upenn.edu/pages/get-data/compustat-capital-iq-standard-poors/compustat/north-america-daily/"
-    print("\n2. Testing with specific URL:")
-    description = get_workflow_action_space_description(url=test_url)
-    print(description)
+    # test_url = "https://wrds-www.wharton.upenn.edu/pages/get-data/compustat-capital-iq-standard-poors/compustat/north-america-daily/fundamentals-annual/"
+    # print("\n2. Testing with specific URL:")
+    # description = get_workflow_action_space_description(url=test_url)
+    # print(description)
 
 def test_all_workflow_mappings():
     """Tests all discovered workflow functions with sample inputs"""

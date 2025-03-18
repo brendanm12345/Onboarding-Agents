@@ -118,32 +118,32 @@ def rerun_if_needed(page: Page) -> None:
         pass
 
 
-def main_workflow(playwright: Playwright) -> None:
-    """
-    Main workflow for interacting with the WRDS platform to gather financial data.
-    """
-    browser = playwright.chromium.launch(headless=False)
-    context = browser.new_context(storage_state="auth/auth.json")
-    page = context.new_page()
+# def main_workflow(playwright: Playwright) -> None:
+#     """
+#     Main workflow for interacting with the WRDS platform to gather financial data.
+#     """
+#     browser = playwright.chromium.launch(headless=False)
+#     context = browser.new_context(storage_state="auth/auth.json")
+#     page = context.new_page()
 
-    print(f"Current URL before executing navigate_to_crsp: {page.url}")
-    navigate_to_crsp(page)
-    print(f"Current URL before executing select_stock_security_files: {page.url}")
-    select_stock_security_files(page)
-    print(f"Current URL before executing set_date_range: {page.url}")
-    set_date_range(page, "2022", "2025")
-    print(f"Current URL before executing enter_sic_codes: {page.url}")
-    enter_sic_codes(page, "    * 7370 7371 7372 7373 7374 7375 7376 7377 7378 7379", "tech1")
-    print(f"Current URL before executing add_all_variables: {page.url}")
-    add_all_variables(page)
-    print(f"Current URL before executing set_output_options: {page.url}")
-    set_output_options(page, "mclaughlin@stanford.edu")
-    print(f"Current URL before executing perform_query_and_download: {page.url}")
-    perform_query_and_download(page)
+#     print(f"Current URL before executing navigate_to_crsp: {page.url}")
+#     navigate_to_crsp(page)
+#     print(f"Current URL before executing select_stock_security_files: {page.url}")
+#     select_stock_security_files(page)
+#     print(f"Current URL before executing set_date_range: {page.url}")
+#     set_date_range(page, "2022", "2025")
+#     print(f"Current URL before executing enter_sic_codes: {page.url}")
+#     enter_sic_codes(page, "    * 7370 7371 7372 7373 7374 7375 7376 7377 7378 7379", "tech1")
+#     print(f"Current URL before executing add_all_variables: {page.url}")
+#     add_all_variables(page)
+#     print(f"Current URL before executing set_output_options: {page.url}")
+#     set_output_options(page, "mclaughlin@stanford.edu")
+#     print(f"Current URL before executing perform_query_and_download: {page.url}")
+#     perform_query_and_download(page)
 
-    context.close()
-    browser.close()
+#     context.close()
+#     browser.close()
 
 
-with sync_playwright() as playwright:
-    main_workflow(playwright)
+# with sync_playwright() as playwright:
+#     main_workflow(playwright)

@@ -5,6 +5,7 @@ import openai
 from browsergym.core.action.highlevel import HighLevelActionSet
 from browsergym.core.action.python import PythonActionSet
 from browsergym.experiments import AbstractAgentArgs, Agent
+from agentlab.agents.agent_args import AgentArgs
 from browsergym.utils.obs import flatten_axtree_to_str, flatten_dom_to_str, prune_html
 from custom_action_mapping import custom_action_mapping
 
@@ -12,6 +13,54 @@ from agents.browser_gym.utils import deduplicate_axtree, image_to_jpg_base64_url
 from agents.browser_gym.custom_action_mapping import get_workflow_action_space_description
 
 logger = logging.getLogger(__name__)
+
+@dataclasses.dataclass
+class DemoAgentArgs(AgentArgs):
+    """
+    This class is meant to store the arguments that define the agent.
+
+    By isolating them in a dataclass, this ensures serialization without storing
+    internal states of the agent.
+    """
+
+    model_name: str = "gpt-4o-mini"
+    chat_mode: bool = False
+    demo_mode: str = "off"
+    use_html: bool = False
+    use_axtree: bool = True
+    use_screenshot: bool = False
+
+    def make_agent(self):
+        return DemoAgent(
+            model_name=self.model_name,
+            chat_mode=self.chat_mode,
+            demo_mode=self.demo_mode,
+            use_html=self.use_html,
+            use_axtree=self.use_axtree,
+            use_screenshot=self.use_screenshot,
+        )
+    
+    def set_reproducibility_mode(self):
+        # You can adjust any parameters that affect determinism here
+        pass
+    
+    def set_benchmark(self, benchmark, demo_mode: bool):
+        # Handle benchmark-specific settings
+        if hasattr(benchmark, 'name') and "workarena" in benchmark.name:
+            # WorkArena specific settings
+            self.use_axtree = True
+            self.use_html = False
+            self.chat_mode = True  # WorkArena tasks use chat mode
+            if demo_mode:
+                self.demo_mode = "default"
+            else:
+                self.demo_mode = "off"
+        else:
+            # Default settings for other benchmarks
+            if demo_mode:
+                self.demo_mode = "default"
+            else:
+                self.demo_mode = "off"
 
 class DemoAgent(Agent):
     """A basic agent using OpenAI API, to demonstrate BrowserGym's functionalities."""
@@ -60,17 +109,27 @@ class DemoAgent(Agent):
             demo_mode=demo_mode,  # add visual effects
         )
 
+        # Key change: Override the to_python_code method with our custom action mapping (this is how we extend the action space)
+        self.action_set.to_python_code = lambda action_str: custom_action_mapping(action_str)
+
         self.action_history = []
 
     def get_action(self, obs: dict) -> tuple[str, dict]:
         system_msgs = []
         user_msgs = []
 
+        # Key change: accessing the current URL (although we don't have to do it like this)
         current_url = None
-        if "open_page_urls" in obs and "active_page_index" in obs:
+        logger.info("Active page index ", obs["active_page_index"])
+        if len(obs["open_pages_urls"]) == 1:
+            current_url = obs["open_pages_urls"][0]
+
+        elif "open_page_urls" in obs and "active_page_index" in obs:
             active_page_index = obs["active_page_index"]
             if 0 <= active_page_index < len(obs["open_pages_urls"]):
                 current_url = obs["open_pages_urls"][active_page_index]
+        
+        print(f"Current URL is set to: {current_url}")
 
         if self.chat_mode:
             system_msgs.append(
@@ -210,7 +269,7 @@ Tab {page_index}{" (active tab)" if page_index == obs["active_page_index"] else 
                 }
             )
 
-        # append action space description
+        # Key change: inject available workflows into action space conditioned on current URL
         action_space_raw = r"""# Standard Action Space
 {action_space_description}
 
@@ -326,30 +385,3 @@ You will now think step by step and produce your next best action. Reflect on yo
         self.action_history.append(f"{action}")
 
         return action, {}
-
-
-@dataclasses.dataclass
-class DemoAgentArgs(AbstractAgentArgs):
-    """
-    This class is meant to store the arguments that define the agent.
-
-    By isolating them in a dataclass, this ensures serialization without storing
-    internal states of the agent.
-    """
-
-    model_name: str = "gpt-4o-mini"
-    chat_mode: bool = False
-    demo_mode: str = "off"
-    use_html: bool = False
-    use_axtree: bool = True
-    use_screenshot: bool = False
-
-    def make_agent(self):
-        return DemoAgent(
-            model_name=self.model_name,
-            chat_mode=self.chat_mode,
-            demo_mode=self.demo_mode,
-            use_html=self.use_html,
-            use_axtree=self.use_axtree,
-            use_screenshot=self.use_screenshot,
-        )

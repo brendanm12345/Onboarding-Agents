@@ -1,9 +1,13 @@
 import argparse
+import random
 from browsergym.experiments import EnvArgs, ExpArgs, get_exp_result
+from browsergym.workarena import ALL_WORKARENA_TASKS
 
-from agent import DemoAgentArgs
-from custom_action_mapping import custom_action_mapping
-
+from agents.browser_gym.agent import DemoAgentArgs
+from agents.browser_gym.custom_action_mapping import (
+    load_workflow_functions,
+    get_workflow_action_space_description
+)
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -75,59 +79,43 @@ https://github.com/ServiceNow/AgentLab"""
 
     args = parse_args()
 
-    # Monkey patch the ExpArgs run method to use our custom action mapping
-    original_run = ExpArgs.run
-    def patched_run(self):
-        # Store the original action mapping
-        if hasattr(self, '_original_action_mapping'):
-            original_action_mapping = self._original_action_mapping
-        else:
-            self._original_action_mapping = None
-            original_action_mapping = None
-            
-        try:
-            # Override the env_args make_env to use our custom mapping
-            original_make_env = self.env_args.make_env
-            def patched_make_env(*args, **kwargs):
-                kwargs['action_mapping'] = custom_action_mapping
-                return original_make_env(*args, **kwargs)
-            self.env_args.make_env = patched_make_env
-            
-            # Run the original method
-            return original_run(self)
-        finally:
-            # Restore original methods
-            self.env_args.make_env = original_make_env
-            if original_action_mapping is not None:
-                self._original_action_mapping = original_action_mapping
-    
-    # Apply the monkey patch
-    ExpArgs.run = patched_run
+    sampled_task = random.choice(ALL_WORKARENA_TASKS)
+    task_name = sampled_task.get_task_id()
+    print(f"Randomly sampled WorkArena task: {task_name}")
 
     # setting up agent config
     agent_args = DemoAgentArgs(
         model_name=args.model_name,
-        chat_mode=False,
+        chat_mode=True,
         demo_mode="default" if args.visual_effects else "off",
         use_html=args.use_html,
         use_axtree=args.use_axtree,
         use_screenshot=args.use_screenshot,
     )
 
+    # print("\n=== Debugging Workflow Action Space ===")
+    # workflow_funcs = load_workflow_functions()
+    # print(f"Found workflow functions: {list(workflow_funcs.keys())}")
+
+    # print("\n=== Debug Workflow Description ===")
+    # print(get_workflow_action_space_description())
+    # print("=================================\n")
+
+
     # setting up environment config
     env_args = EnvArgs(
-        task_name=args.task_name,
+        task_name=task_name,
         task_seed=None,
         max_steps=100,
         headless=False,  # keep the browser open
-        storage_state="auth/auth.json"
+        storage_state="auth/auth.json",
     )
 
-    # for openended task, set environment and agent to interactive chat mode on a start url
-    if args.task_name == "openended":
-        agent_args.chat_mode = True
-        env_args.wait_for_user_message = True
-        env_args.task_kwargs = {"start_url": args.start_url}
+    # # for openended task, set environment and agent to interactive chat mode on a start url
+    # if args.task_name == "openended":
+    #     agent_args.chat_mode = True
+    #     env_args.wait_for_user_message = True
+    #     env_args.task_kwargs = {"start_url": args.start_url}
 
     # setting up the experiment
     exp_args = ExpArgs(
