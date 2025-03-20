@@ -12,6 +12,9 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
+import inspect
+import logging
+import re
 from typing import Optional
 import bgym
 from agentlab.agents.agent_args import AgentArgs
@@ -20,7 +23,9 @@ from agentlab.agents import dynamic_prompting as dp
 from agentlab.agents.generic_agent.generic_agent import GenericAgent, GenericPromptFlags
 from browsergym.core.action.highlevel import HighLevelActionSet
 from browsergym.experiments.benchmark.base import HighLevelActionSetArgs
-from custom_action_mapping import custom_action_mapping, get_workflow_action_space_description
+from custom_action_mapping import custom_action_mapping, get_workflow_action_space_description, load_workflow_functions
+
+logger = logging.getLogger(__name__)
 
 class ExtendedActionSet(HighLevelActionSet):
     """Extends HighLevelActionSet to support workflow actions"""
@@ -66,10 +71,13 @@ class ExtendedActionSet(HighLevelActionSet):
                 workflow_description += "    Examples:\n"
                 workflow_description += f"        WORKFLOW.{func_name}(arg1='value1')\n"
         
+        print("Printing Action Space Description Below:\n")
+        print(base_description + workflow_description)
         return base_description + workflow_description
 
     def to_python_code(self, action_str: str) -> str:
         """Convert action string to Python code"""
+        print(f"Current action string: {action_str}")
         if action_str.startswith("WORKFLOW."):
             # Parse workflow action using similar approach to HighLevelActionSet
             try:
@@ -80,6 +88,8 @@ class ExtendedActionSet(HighLevelActionSet):
                 workflow_name, args_str = action_part.split('(', 1)
                 args_str = args_str.rstrip(')')
                 workflow_name = workflow_name.strip()
+
+                print(f"Extracted workflow name: {workflow_name}")
                 
                 if workflow_name not in self._workflow_functions:
                     raise ValueError(f"Unknown workflow action: {workflow_name}")
@@ -92,6 +102,8 @@ class ExtendedActionSet(HighLevelActionSet):
                         if '=' in arg_pair:
                             key, value = arg_pair.split('=', 1)
                             kwargs[key.strip()] = eval(value.strip())
+
+                print(f"Kwags for extracted workflow: {kwargs}")
                 
                 return self._workflow_functions[workflow_name](**kwargs)
                 
@@ -125,6 +137,10 @@ class CustomAgentArgs(AgentArgs):
         print("CustomAgentArgs.__post_init__ called")
         try:
             self.agent_name = f"CustomAgent-{self.chat_model_args.model_name}".replace("/", "_")
+
+            if self.flags:
+                self.flags.enable_chat = True
+                print("Chat mode enabled")
             
             # Initialize action set if it's not set
             if self.flags and self.flags.action and self.flags.action.action_set is None:
@@ -190,12 +206,35 @@ class CustomAgent(GenericAgent):
         if len(obs["open_pages_urls"]) > 0:
             active_idx = obs.get("active_page_index", 0)
             if 0 <= active_idx < len(obs["open_pages_urls"]):
-                current_url = obs["open_pages_urls"][int(active_idx,)]
+                current_url = obs["open_pages_urls"][int(active_idx)]
         
         # Update URL context in action set
         if isinstance(self.action_set, ExtendedActionSet):
             self.action_set.set_current_url(current_url)
+            logger.info(f"Current URL context: {current_url}")
 
         # Get action using parent implementation 
         action, agent_info = super().get_action(obs)
+        
+        # Log the conversation
+        if agent_info.chat_messages:
+            logger.info("\n=== Conversation ===")
+            for msg in agent_info.chat_messages:
+                role = msg.get("role", "unknown")
+                content = msg.get("content", "")
+                logger.info(f"[{role}]: {content}")
+            logger.info("=== End Conversation ===\n")
+
+        # Log thinking process if available
+        if agent_info.think:
+            logger.info("\n=== Thinking ===")
+            logger.info(agent_info.think)
+            logger.info("=== End Thinking ===\n")
+
+        # Log action and stats
+        logger.info(f"\n=== Action and Stats ===")
+        logger.info(f"Action: {action}")
+        logger.info(f"Stats: {agent_info.stats}")
+        logger.info("=== End Action and Stats ===\n")
+
         return action, agent_info

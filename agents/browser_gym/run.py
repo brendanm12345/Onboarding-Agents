@@ -109,16 +109,11 @@ def main():
     exp_args = ExpArgs(
         env_args=env_args,
         agent_args=agent_args,
+        enable_debug=True
     )
 
     exp_args.prepare("results")
     exp_args.run()
-
-    # Print results
-    exp_result = get_exp_result(exp_args.exp_dir)
-    exp_record = exp_result.get_exp_record()
-    for key, val in exp_record.items():
-        print(f"{key}: {val}")
 
 if __name__ == "__main__":
     main()
