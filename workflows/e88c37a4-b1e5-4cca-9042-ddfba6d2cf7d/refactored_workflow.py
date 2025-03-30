@@ -85,7 +85,7 @@ def main_workflow() -> None:
     """
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=False)
-        context = browser.new_context(storage_state="auth/auth.json")
+        context = browser.new_context(storage_state="/Users/brendanmclaughlin/Documents/code/research/onboarding-agents/onboarding-agents/auth/auth.json")
         page = context.new_page()
 
         print(f"Current URL before executing navigate_to_data_source: {page.url}")

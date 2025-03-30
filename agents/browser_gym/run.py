@@ -6,7 +6,7 @@ from agentlab.llm.chat_api import OpenAIModelArgs, OpenRouterModelArgs
 from agentlab.agents.generic_agent.generic_agent_prompt import GenericPromptFlags
 from agentlab.agents import dynamic_prompting as dp
 
-from agents.browser_gym.onboarded_agent import CustomAgentArgs
+from agents.browser_gym.onboard_agent import CustomAgentArgs
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -50,16 +50,22 @@ def parse_args():
         default=False,
         help="Use screenshot in observation space",
     )
+    parser.add_argument(
+        "--show_source",
+        type=str2bool,
+        default=True,
+        help="Show source code for workflow actions in action space",
+    )
     return parser.parse_args()
 
 def main():
     args = parse_args()
 
-    # Sample a random WorkArena L1 task
-    sampled_task = random.choice(ALL_WORKARENA_TASKS)
-    task_name = sampled_task.get_task_id()
-    print(f"Sampled task: {sampled_task}")
-    print(f"Randomly sampled WorkArena task: {task_name}")
+    # Choose the first work arena L1 task
+    task = ALL_WORKARENA_TASKS[0]
+    task_name = task.get_task_id()
+    print(f"Running task: {task_name}")
+
 
     # Create model args based on the model name
     if args.model_name.startswith("gpt"):
@@ -83,7 +89,7 @@ def main():
             use_screenshot=args.use_screenshot,
         ),
         action=dp.ActionFlags(
-            action_set=None,  # Will be set by set_benchmark
+            action_set=None, # this will be set in set_benchmark
             multi_actions=False,
             is_strict=False,
         ),
@@ -94,6 +100,7 @@ def main():
         chat_model_args=model_args,
         flags=prompt_flags,
         max_retry=4,
+        show_source=args.show_source
     )
 
     # Create environment args

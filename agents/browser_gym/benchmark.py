@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import dataclasses
 import os
 import sys
@@ -10,16 +9,8 @@ from agentlab.experiments.study import make_study
 from agentlab.agents.generic_agent import AGENT_4o
 import browsergym as bgym
 
-from agents.browser_gym.agent import DemoAgentArgs
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Run WorkArena benchmark comparison.")
-    parser.add_argument(
-        "--workflows_dir", 
-        type=str, 
-        default="workflows",
-        help="Directory containing workflow definitions"
-    )
     parser.add_argument(
         "--n_jobs", 
         type=int, 
@@ -41,49 +32,23 @@ def parse_args():
 
 def main():
     args = parse_args()
-    
-    # Check environment setup
-    if "OPENAI_API_KEY" not in os.environ:
-        print("ERROR: OPENAI_API_KEY environment variable not set")
-        sys.exit(1)
 
-    if not os.path.exists(args.workflows_dir):
-        print(f"ERROR: Workflows directory not found at {args.workflows_dir}")
-        sys.exit(1)
-
-    # Configure workflow agent
-    workflow_agent = DemoAgentArgs(
-        model_name=args.model_name,
-        chat_mode=True,  # WorkArena uses chat mode
-        demo_mode="off",
-        use_html=False,
-        use_axtree=True,
-        use_screenshot=False,
-    )
-
-    # Set up agents list
-    agents = [workflow_agent]
-    if args.run_baseline:
-        agents.append(AGENT_4o)
-
+    # we would later add our agent to this list if baseline works
     agents = [AGENT_4o]
 
-    # Get the benchmark
     benchmark = "workarena_l1"
 
-    # Create and run study
     print("Creating benchmark study...")
     study = make_study(
         benchmark=benchmark,
         agent_args=agents,
         logging_level_stdout=logging.INFO,
-        comment="WorkArena L1 Benchmark: Workflow Agent vs Baseline"
+        comment="WorkArena L1 Benchmark: Baseline"
     )
 
     print(f"Running study with {len(agents)} agent(s) using {args.n_jobs} parallel job(s)")
     study.run(n_jobs=args.n_jobs)
 
-    # Print results
     print("\nResults Summary:")
     study.print_summary()
     print(f"\nDetailed results saved to: {study.study_dir}")
