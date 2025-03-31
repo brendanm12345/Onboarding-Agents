@@ -6,7 +6,7 @@ from agentlab.llm.chat_api import OpenAIModelArgs, OpenRouterModelArgs
 from agentlab.agents.generic_agent.generic_agent_prompt import GenericPromptFlags
 from agentlab.agents import dynamic_prompting as dp
 
-from agents.browser_gym.onboard_agent import CustomAgentArgs
+from agents.browser_gym.onboard_agent import OnboardAgentArgs
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -61,11 +61,14 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # Choose the first work arena L1 task
-    task = ALL_WORKARENA_TASKS[0]
-    task_name = task.get_task_id()
-    print(f"Running task: {task_name}")
+    # Option 1: run the first work arena L1 task
+    # task = ALL_WORKARENA_TASKS[0]
+    # task_name = task.get_task_id()
+    # print(f"Running task: {task_name}")
 
+    # Option 2: run your own task from a starting url
+    task_name = "openended"
+    start_url = "https://wrds-www.wharton.upenn.edu/"
 
     # Create model args based on the model name
     if args.model_name.startswith("gpt"):
@@ -92,11 +95,13 @@ def main():
             action_set=None, # this will be set in set_benchmark
             multi_actions=False,
             is_strict=False,
+            
         ),
+        use_thinking=True
     )
 
     # Create agent args
-    agent_args = CustomAgentArgs(
+    agent_args = OnboardAgentArgs(
         chat_model_args=model_args,
         flags=prompt_flags,
         max_retry=4,
@@ -111,6 +116,11 @@ def main():
         headless=False,
         storage_state="auth/auth.json",
     )
+
+    # Run custom task
+    if task_name == "openended":
+        env_args.wait_for_user_message = True
+        env_args.task_kwargs = {"start_url": start_url}
 
     # Create and run experiment
     exp_args = ExpArgs(

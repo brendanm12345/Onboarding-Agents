@@ -23,7 +23,7 @@ class ExtendedActionSet(HighLevelActionSet):
         super().__init__(*args, **kwargs)
         self._current_url = current_url
         self._base_description = None
-        self.show_source = False
+        self.show_source = True
         # Load workflow functions when initializing
         self._workflow_functions = load_workflow_functions()
 
@@ -82,7 +82,7 @@ class ExtendedActionSet(HighLevelActionSet):
         if not self._workflow_functions:
             return base_description
 
-        workflow_description = "\nWorkflow Actions:\n"
+        workflow_description = ""
 
         for func_name, func_obj in self._workflow_functions.items():
             original_func = func_obj.original_func
@@ -99,8 +99,8 @@ class ExtendedActionSet(HighLevelActionSet):
             url_constraint = url_match.group(1) if url_match else None
 
             # Skip if URL doesn't match constraint
-            # if self._current_url and url_constraint and not (self._current_url == url_constraint):
-            #     continue
+            if self._current_url and url_constraint and not (self._current_url == url_constraint):
+                continue
 
             # Add function signature and description
             workflow_description += f"\nWORKFLOW.{func_name}{sig_str}\n"
@@ -142,6 +142,9 @@ class ExtendedActionSet(HighLevelActionSet):
                         if line.strip():  # Only show non-empty lines
                             workflow_description += f"        {line}\n"
                     workflow_description += "\n"
+
+        if workflow_description:
+            workflow_description = "\nHere are some additional, potentially useful, 'workflow' actions that are available for this web page. You learned them from human demonstration:\n" + workflow_description
 
         return base_description + workflow_description
 
@@ -348,3 +351,27 @@ class OnboardAgent(GenericAgent):
         logger.info("="*50 + "\n")
 
         return action, agent_info
+
+
+def test_describe():
+    """Quick test to inspect the action space with different URLs"""
+    # Test URLs
+    test_urls = [
+        "https://wrds-www.wharton.upenn.edu/login/",  # example URL
+        "https://wrds-www.wharton.upenn.edu/",        # another example
+        None,                                         # no URL case
+    ]
+    
+    for url in test_urls:
+        print("\n" + "="*80)
+        print(f"Testing with URL: {url}")
+        print("="*80)
+        
+        # Initialize action set with test URL
+        action_set = ExtendedActionSet(current_url=url)
+        
+        # Print the full description
+        print(action_set.describe())
+
+if __name__ == "__main__":
+    test_describe()
